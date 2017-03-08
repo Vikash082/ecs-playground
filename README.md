@@ -354,18 +354,16 @@ There is a lot more to ECS and spend some time with the AWS console, especially,
 
  - AWS recommends using their EC2 AMIs for the EC2 instances. If you want more control over this or want run CoreOS or similar, then you need to bake ECS agents into those AMIs. The ECS agent is open source and so you can easily do that. Always run the latest agent version or the Container agent. The earlier versions had a few bugs and ECS is a changing ecosystem. 
  
- -  If you want to use AWS Linux as Docker Images, please refer to instructions under [https://hub.docker.com/_/amazonlinux/](https://hub.docker.com/_/amazonlinux/)
+ -  If you want to use AWS Linux as a Docker Image, please refer to instructions under [https://hub.docker.com/_/amazonlinux/](https://hub.docker.com/_/amazonlinux/)
 
-
- - Service discovery is limited inside ECS. You can use environment variables in task definitions but that is not service discovery per say. You can run something like Consul or Weave and use it for service discovery. AWS has a good blog article on this ; [https://aws.amazon.com/blogs/compute/service-discovery-via-consul-with-amazon-ecs/]()
+ - Service discovery, which is key in micro-services world, is limited inside ECS. You can use environment variables in task definitions but that is not service discovery per say. You can run something like Consul or Weave and use it for service discovery. AWS has a good blog article on this ; [https://aws.amazon.com/blogs/compute/service-discovery-via-consul-with-amazon-ecs/](). It is also possible that AWS release some new feature/service that solves for this use-case.
 
  - Use ECS schedulers for auto-recovery of services. ECS has few in-built options and also allows external schedulers. So you can use something like Mesos with ECS; [https://github.com/awslabs/ecs-mesos-scheduler-driver]()  
 
  - There is no central Docker endpoint as far as the ECS cluster is concerned. As a developer, you cannot point your local Docker client to an ECS endpoint. Note, while some may see this as a limitation, the purpose of ECS is not to provide a Docker endpoint. ECS purpose is targetted at running Docker instances from an Operations perspective. 
- 
- - You are still running a container inside a virtual machine. Bare-metal performance is always the best option for containers but AWS has started providing ways to control the underlying hardware. Eg. Controlling the C-states; [http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html]()
-  
- - Windows containers are now available in Beta. These are launched with the Microsoft Windows Server 2016 Base with Containers AMI. Note, Windows on ECS is not at feature parity with Linux.  Also the Windows images are much larger which means the spin up time is high for the first time you run a Windows container. 
+   
+ - Windows containers are now available in Beta. These are launched with the Microsoft Windows Server 2016 Base with Containers AMI. Note, Windows on ECS is not at feature parity with Linux.  Also the Windows images are much larger which means the spin up time is high for the first time you run a Windows container. As with most AWS services, this will change and improve over time. 
+
   
 ==========
 
