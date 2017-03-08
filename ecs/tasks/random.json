@@ -1,0 +1,22 @@
+{
+    "containerDefinitions": [
+    {
+        "name": "random", 
+        "image": "srirajan/random", 
+        "cpu": 512, 
+        "memory": 512, 
+        "portMappings": [
+        {
+            "protocol": "tcp",
+            "containerPort": 10081,
+            "hostPort": 0
+        }
+        ],
+        "essential": true, 
+        "dockerLabels": {
+          "service": "random"
+        }
+    }
+  ],
+  "family": "random"
+}
