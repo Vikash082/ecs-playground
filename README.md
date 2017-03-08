@@ -2,49 +2,41 @@
 
 In this post we will look at AWS ECS and how it could be used to deploy Docker containers. From a use-case perspective, ECS allows you to build a production scale, auto-scaling and monitored platform for running Docker containers. If you are already using AWS, outside of cost for EC2 instances, there is no additional cost for ECS. So it is a low friction entry point for testing and proof of concepts.
 
+At a high level, ECS is a cluster management framework that provides management of EC2(Elastic Compute) instances that run as Docker Hosts. It includes a scheduler to execute processes/containers on EC2 instances and has constructs to deploy and manage versions of the applications. You can also combine this with AWS Autoscale groups and Load Balancing (Classic and Application) service. In addition, ECS also has autoscaling at the ECS Service level.
+ 
+The goal is to achieve the following :-
 
-At a high level, ECS is a cluster management framework that provides
-
- - Management of EC2(Elastic Compute) instances that run as Docker Hosts. 
+ - Deploy two services into ECS, behind a single Load balancer with different target groups.
  
- - Scheduler to execute processes/containers on EC2 instances.
- 
- - Constructs to deploy and manage versions of the applications.
- 
- - You can also combine this with AWS Autoscale groups and Load Balancing (Classic and Application) service.
-
-Now, let's get familiar with some ECS concepts and terms.
-
- - Cluster :  A logical grouping of EC2 container instances. The cluster is a skeleton around which build your workload.
- 
- - Container Instance/s : This is actually an EC2 instance running the ECS agent. The recommended option is to use AWS ECS AMI but any AMI can be used as long as you add the ECS agent to it. The ECS agent is open source as well.
- 
- - Container Agent : The agent that runs on EC2 instances to form the ECS cluster. If you are using the ECS optimised AMI, then you don't need to do anything as the agent comes with it. But if you want run your own OS/AMI, you will need to install the agent. The container agent is open source and can be found at [https://github.com/aws/amazon-ecs-agent]()
- 
- - Task Definition : An application containing one or more containers. This is where you provide the Docker images, how much CPU/Memory to use, ports etc. You can also link containers here similar to Docker command line. Tasks are somewhat similar to Docker Compose.
-
- - Task : An instance of a task definition running on a container instance.
- 
- - Service : A service in ECS allows you to run and maintain a specified number of instances of a task definition. If a task in a service stops, the task is restarted. Services ensure that desired running tasks is achieved and maintained. Services  can also include things like ELB configuration or IAM roles.
- 
- - Container : A Docker container that is 'run' as part of a task.
-
- - Service Auto Scaling : This is similar to the EC2 auto scaling concept but applies to the number of containers you are running for each service.The ECS service scheduler respects the desired count at all times. In addition, a scaling policy can be configured to trigger a scale out based on alarms.
-
-
-Now, let's go into a step-by-step deployment on ECS. Note, this assumes some familiarity with Git & Docker and AWS services like VPC, ELB, EC2. The goal of this tutorial is to achieve the following
-
- - Deploy two services into ECS, behind a single Load balancer
- 
- - Deploy them using ECS cli and using the tasks and services
- 
- - Perform a change to the application and deploy new versions
-   
-Here's how it looks architecturally;
+ - Deploy ECS tasks and services using ECS cli.
+    
+Architecturally, we will build this.
 
 ![image](graphics/ecs-sample.png)
 
-It is assumed you already have an AWS account and have a VPC to deploy ECS.  Other than a VPC setup, everything else will be covered in this post. 
+It is assumed that you already have an AWS account and have a VPC to deploy ECS. 
+It is also assumed that you have some familiarity with Git & Docker and AWS services like VPC, ELB & EC2. 
+
+## ECS CONCEPTS 
+
+
+Let's get familiar with some ECS concepts and terms.
+
+ - *Cluster* :  A logical grouping of EC2 container instances. The cluster is a skeleton structure around which you build and operate workloads.
+ 
+ - *Container Instance/s* : This is actually an EC2 instance running the ECS agent. The recommended option is to use AWS ECS AMI but any AMI can be used as long as you add the ECS agent to it. The ECS agent is open source as well.
+ 
+ - *Container Agent* : The agent that runs on EC2 instances to form the ECS cluster. If you are using the ECS optimised AMI, then you don't need to do anything as the agent comes with it. But if you want run your own OS/AMI, you will need to install the agent. The container agent is open source and can be found at [https://github.com/aws/amazon-ecs-agent]().
+ 
+ - *Task Definition* : An application containing one or more containers. This is where you provide the Docker images, how much CPU/Memory to use, ports etc. You can also link containers here similar to Docker command line.
+
+ - *Task* : An instance of a task definition running on a container instance.
+ 
+ - *Service* : A service in ECS allows you to run and maintain a specified number of instances of a task definition. If a task in a service stops, the task is restarted. Services ensure that desired running tasks is achieved and maintained. Services  can also include things like load balancer configuration, IAM roles and placement strategies.
+ 
+ - *Container* : A Docker container that is executed as part of a task.
+
+ - *Service Auto Scaling* : This is similar to the EC2 auto scaling concept but applies to the number of containers you are running for each service.The ECS service scheduler respects the desired count at all times. In addition, a scaling policy can be configured to trigger a scale out based on alarms.
 
 
 ### Prepare Security Groups
@@ -58,14 +50,13 @@ It is assumed you already have an AWS account and have a VPC to deploy ECS.  Oth
 
 ### Prepare Application Load Balancer (ALB) 
 
- ECS will work with both Classic load balancers and application load balancers. Application load balancer (ALB) is the best fit for ECS because of features likes dynamic ports, url based target groups etc. That is what we will use in this example.  For this example we will create two ALB instances; auth and random.  
+ECS will work with both classic load balancers and application load balancers. Application load balancer (ALB) is the best fit for ECS because of features likes dynamic ports, url based target groups etc. For this example we will create two ALB instances; *auth* and *random*.  
  
-   - You have decide on the ports you will use for the services. In our example, we choose port *10080* for the auth service and *10081* for the random service.
+   - You have to decide on the ports you will use for the services. In our example, we choose port *10080* for the auth service and *10081* for the random service. This port number is defined separately at all layers; load balancer, task definition, service definition and the actual listener port inside the container. So, it needs to match.
    
-   - Create an application load balancer that listens on port 80 and choose the appropriate subnets. 
+   - Create an application load balancer that listens on port 80 and choose the appropriate subnets as per your VPC.
    
-   - Create two target groups. *auth* will be our default target group and *random* will be the second. Configure proper health checks as you would with any instance. Do not add any EC2 instances to it. This will be done later on in the ECS service side. Here are the details 
-
+   - Create two target groups. *auth* will be our default target group and *random* will be the second. Configure proper health checks as you would with any instance. Do not add any EC2 instances to it. This will be done later on in the ECS service side. Here are the details.
 
 ```
 aws elbv2 describe-target-groups --name auth
@@ -89,7 +80,7 @@ aws elbv2 describe-target-groups --name auth
         }
     ]
 }
-~$ aws elbv2 describe-target-groups --name random
+aws elbv2 describe-target-groups --name random
 {
     "TargetGroups": [
         {
@@ -153,9 +144,7 @@ aws ecs create-cluster --cluster-name stage01
 echo ECS_CLUSTER=stage01 >> /etc/ecs/ecs.config
 ```
  
- 
  -  Next, we add EC2 instances to it.  You can do this in the console or via the command line. Make sure the IAM role is pre-created and you have security group id from above. Also to make a cluster, spin up at least 2 instances. If you want to distribute this across availability zones, then you need this separately for each subnet id.
- 
   
 ```
 aws ec2 run-instances \
@@ -171,8 +160,8 @@ aws ec2 run-instances \
  
   - Describe the cluster to make sure registeredContainerInstancesCount is set to the correct value (2)
   
-```
 
+```
 aws ecs describe-clusters --cluster stage01
 {
     "clusters": [
@@ -197,10 +186,11 @@ aws ecs list-container-instances --cluster stage01
         "arn:aws:ecs:us-east-1:759133634148:container-instance/f13220a5-e34f-4498-a5f1-08e4f253a658"
     ]
 }
+
 ```
 
- - At this point we have the ECS cluster running with two instances and is ready to taken on workload/s. 
-```
+ - At this point we have the ECS cluster running with two instances and is ready to take on some workload.
+  
 
 ### Deploy ECS Tasks and Services
 
@@ -248,7 +238,6 @@ Parameters explained:
 *DockerLabels* - Labels are a mechanism for applying metadata to Docker objects
 
 *family* - Family is similar to a name for multiple versions of the task definition.
-
 
 This above list is small subnet of the parameters and is just scratching the surface. There are tons of different options you can use in a task definition. You can read about all the parameters in detail here [http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html)
 
@@ -361,7 +350,7 @@ aws ecs update-service --cluster default --service auth --desired-count 2 --task
 
 ### Parting thoughts
 
-That's ends introduction and a step by step deployment of ECS. There is a lot more to ECS and spend some time with the AWS console, especially, the metrics tab to view the usage of your cluster. Here are some other points worth considering.
+There is a lot more to ECS and spend some time with the AWS console, especially, the metrics tab to view the usage of your cluster. Here are some other points worth considering.
 
  - AWS recommends using their EC2 AMIs for the EC2 instances. If you want more control over this or want run CoreOS or similar, then you need to bake ECS agents into those AMIs. The ECS agent is open source and so you can easily do that. Always run the latest agent version or the Container agent. The earlier versions had a few bugs and ECS is a changing ecosystem. 
  
@@ -377,7 +366,6 @@ That's ends introduction and a step by step deployment of ECS. There is a lot mo
  - You are still running a container inside a virtual machine. Bare-metal performance is always the best option for containers but AWS has started providing ways to control the underlying hardware. Eg. Controlling the C-states; [http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html]()
   
  - Windows containers are now available in Beta. These are launched with the Microsoft Windows Server 2016 Base with Containers AMI. Note, Windows on ECS is not at feature parity with Linux.  Also the Windows images are much larger which means the spin up time is high for the first time you run a Windows container. 
- 
   
 ==========
 
