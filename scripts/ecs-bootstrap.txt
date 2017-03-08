@@ -1,0 +1,3 @@
+#!/bin/bash
+echo ECS_CLUSTER=stage01 >> /etc/ecs/ecs.config
+
