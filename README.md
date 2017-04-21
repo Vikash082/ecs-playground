@@ -308,7 +308,7 @@ Parameters explained:
 *placementStrategy* : The algorithm for task placement or termination. There are 3 options; *binpack* - Place tasks based on the least available amount of CPU or memory, *random* -  Place tasks randomly and *spread* - Place tasks evenly based on the specified attribute
 
 
- - Create the services. Finally, after all this work, we will have some containers running.
+ - Create the services. Make sure to replace the targetGroupArn and role in the json file with the respective ARNs. Finally, after all this work, we will have some containers running.
  
 ```
 aws ecs create-service --cli-input-json file://ecs/services/auth.json
