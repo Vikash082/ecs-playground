@@ -148,7 +148,7 @@ echo ECS_CLUSTER=stage01 >> /etc/ecs/ecs.config
   
 ```
 aws ec2 run-instances \
---image-id ami-195eaf0f \
+--image-id <replace with latest ami id from http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI_launch_latest.html> \
 --key-name <ssh key> \
 --security-group-ids <stage01-ecs security group id> \
 --instance-type t2.small \
