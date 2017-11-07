@@ -4,7 +4,7 @@
   "taskDefinition": "random",
   "loadBalancers": [
       {
-          "targetGroupArn": "<replace with target group ARN>",
+          "targetGroupArn": "<replace with target group ARN from your setup>",
           "containerName": "random", 
           "containerPort": 10081
       }
