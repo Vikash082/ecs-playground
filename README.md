@@ -362,8 +362,6 @@ There is a lot more to ECS and spend some time with the AWS console, especially,
 
  - There is no central Docker endpoint as far as the ECS cluster is concerned. As a developer, you cannot point your local Docker client to an ECS endpoint. Note, while some may see this as a limitation, the purpose of ECS is not to provide a Docker endpoint. ECS purpose is targetted at running Docker instances from an Operations perspective. 
    
- - Windows containers are now available in Beta. These are launched with the Microsoft Windows Server 2016 Base with Containers AMI. Note, Windows on ECS is not at feature parity with Linux.  Also the Windows images are much larger which means the spin up time is high for the first time you run a Windows container. As with most AWS services, this will change and improve over time. 
-
   
 ==========
 
