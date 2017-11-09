@@ -22,17 +22,17 @@ It is also assumed that you have some familiarity with Git & Docker and AWS serv
 
 Let's get familiar with some ECS concepts and terms.
 
- - *Cluster* :  A logical grouping of EC2 container instances. The cluster is a skeleton structure around which you build and operate workloads.
- 
- - *Container Instance/s* : This is actually an EC2 instance running the ECS agent. The recommended option is to use AWS ECS AMI but any AMI can be used as long as you add the ECS agent to it. The ECS agent is open source as well.
+ - *Cluster* :  The cluster is a skeleton structure around which you build and operate workloads. EC2 container instances logically belong to it.
+
+ - *Container Instance/s* : This is actually an EC2 instance running Docker daemon and the ECS agent (Container agent). The recommended option is to use AWS ECS AMI but any AMI can be used as long as you add the ECS agent to it. The ECS agent is open source as well.
  
  - *Container Agent* : The agent that runs on EC2 instances to form the ECS cluster. If you are using the ECS optimised AMI, then you don't need to do anything as the agent comes with it. But if you want run your own OS/AMI, you will need to install the agent. The container agent is open source and can be found at [https://github.com/aws/amazon-ecs-agent]().
  
  - *Task Definition* : An application containing one or more containers. This is where you provide the Docker images, how much CPU/Memory to use, ports etc. You can also link containers here similar to Docker command line.
 
- - *Task* : An instance of a task definition running on a container instance.
- 
  - *Service* : A service in ECS allows you to run and maintain a specified number of instances of a task definition. If a task in a service stops, the task is restarted. Services ensure that desired running tasks is achieved and maintained. Services  can also include things like load balancer configuration, IAM roles and placement strategies.
+
+ - *Task* : An instance of a task definition running on a container instance. . The key difference is that task definitions do not belong to a cluster or a service. They are just definitions in your ECS setup.  When you include them in a service they become tasks and run on the container instances belonging to your ECS cluster 
  
  - *Container* : A Docker container that is executed as part of a task.
 
@@ -346,24 +346,6 @@ E.g.
 ```
 aws ecs update-service --cluster default --service auth --desired-count 2 --task-definition auth:2 --deployment-configuration maximumPercent=200,minimumHealthyPercent=50
 ```
-
-
-### Parting thoughts
-
-There is a lot more to ECS and spend some time with the AWS console, especially, the metrics tab to view the usage of your cluster. Here are some other points worth considering.
-
- - AWS recommends using their EC2 AMIs for the EC2 instances. If you want more control over this or want run CoreOS or similar, then you need to bake ECS agents into those AMIs. The ECS agent is open source and so you can easily do that. Always run the latest agent version or the Container agent. The earlier versions had a few bugs and ECS is a changing ecosystem. 
- 
- -  If you want to use AWS Linux as a Docker Image, please refer to instructions under [https://hub.docker.com/_/amazonlinux/](https://hub.docker.com/_/amazonlinux/)
-
- - Service discovery, which is key in micro-services world, is limited inside ECS. You can use environment variables in task definitions but that is not service discovery per say. You can run something like Consul or Weave and use it for service discovery. AWS has a good blog article on this ; [https://aws.amazon.com/blogs/compute/service-discovery-via-consul-with-amazon-ecs/](). It is also possible that AWS release some new feature/service that solves for this use-case.
-
- - Use ECS schedulers for auto-recovery of services. ECS has few in-built options and also allows external schedulers. So you can use something like Mesos with ECS; [https://github.com/awslabs/ecs-mesos-scheduler-driver]()  
-
- - There is no central Docker endpoint as far as the ECS cluster is concerned. As a developer, you cannot point your local Docker client to an ECS endpoint. Note, while some may see this as a limitation, the purpose of ECS is not to provide a Docker endpoint. ECS purpose is targetted at running Docker instances from an Operations perspective. 
-   
-  
-==========
 
 ## References and Links
 
