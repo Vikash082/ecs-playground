@@ -39,6 +39,19 @@ Let's get familiar with some ECS concepts and terms.
  - *Service Auto Scaling* : This is similar to the EC2 auto scaling concept but applies to the number of containers you are running for each service.The ECS service scheduler respects the desired count at all times. In addition, a scaling policy can be configured to trigger a scale out based on alarms.
 
 
+### Prepare IAM Roles
+
+AWS provides pre-configured roles that you can use. The recomendation is to create a custom role called ECS and attach the following policies to this
+
+ -  AmazonEC2ContainerServiceRole
+ 
+If you need to test Autoscale and plan to use ECR you will also need these
+
+ - AmazonEC2ContainerServiceAutoscaleRole
+ 
+ - AmazonEC2ContainerRegistryReadOnly
+
+
 ### Prepare Security Groups
 
  - Create a security groups named *stage01-alb*. In this group, allow port 80 on inbound. 
@@ -172,7 +185,7 @@ aws ecs describe-clusters --cluster stage01
             "pendingTasksCount": 0, 
             "runningTasksCount": 0, 
             "activeServicesCount": 0, 
-            "clusterArn": "arn:aws:ecs:us-east-1:759133634148:cluster/stage01"
+            "clusterArn": "arn:aws:ecs:us-east-1:359145003634148:cluster/stage01"
         }
     ], 
     "failures": []
@@ -182,8 +195,8 @@ aws ecs describe-clusters --cluster stage01
 aws ecs list-container-instances --cluster stage01
 {
     "containerInstanceArns": [
-        "arn:aws:ecs:us-east-1:759133634148:container-instance/4e042e9a-d63d-412d-8960-fd09314af739", 
-        "arn:aws:ecs:us-east-1:759133634148:container-instance/f13220a5-e34f-4498-a5f1-08e4f253a658"
+        "arn:aws:ecs:us-east-1:359145003634148:container-instance/4e042e9a-d63d-412d-8960-fd09314af739", 
+        "arn:aws:ecs:us-east-1:359145003634148:container-instance/f13220a5-e34f-4498-a5f1-08e4f253a658"
     ]
 }
 
