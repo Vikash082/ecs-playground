@@ -1,4 +1,8 @@
-# ECS
+# Presentation
+
+ - [ECS.pdf](ECS.pdf)
+
+# ECS Tutorial
 
 In this post we will look at AWS ECS and how it could be used to deploy Docker containers. From a use-case perspective, ECS allows you to build a production scale, auto-scaling and monitored platform for running Docker containers. If you are already using AWS, outside of cost for EC2 instances, there is no additional cost for ECS. So it is a low friction entry point for testing and proof of concepts.
 
@@ -18,7 +22,6 @@ It is assumed that you already have an AWS account and have a VPC to deploy ECS.
 It is also assumed that you have some familiarity with Git & Docker and AWS services like VPC, ELB & EC2. 
 
 ## ECS CONCEPTS 
-
 
 Let's get familiar with some ECS concepts and terms.
 
@@ -367,6 +370,4 @@ aws ecs update-service --cluster default --service auth --desired-count 2 --task
  - [http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html]()
 
 
-## Presentation
 
- - [ECS.pdf](ECS.pdf)
